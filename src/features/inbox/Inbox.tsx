@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRecommendations } from '@/api/hooks';
-import { Card } from '@/components/Card';
-import { DataModeChip, StatusChip, VERDICT_LABEL, trustTone, verdictTone } from '@/components/Chips';
-import { Frame } from '@/components/Frame';
-import { PillBar } from '@/components/PillBar';
-import { DesertScene } from '@/components/scenes/DesertScene';
+import { VERDICT_LABEL, trustTone, verdictTone } from '@/components/Chips';
+import { PageHeader } from '@/components/Shell';
+import { Panel, Status } from '@/components/ui';
 import { inr } from '@/lib/format';
+import { WellIcon } from '@/components/Icons';
+
+const NAME: Record<string, string> = { PRODUCTION: 'Most oil', BALANCED: 'Balanced', ENERGY: 'Least energy', RELIABILITY: 'Most reliable' };
 
 /** Recommendation inbox and history (frontend.md §5.7). */
 export function Inbox() {
@@ -15,48 +16,38 @@ export function Inbox() {
   const nav = useNavigate();
   const rows = (data ?? []).filter((r) => filter === 'ALL' || r.status === 'PENDING');
   return (
-    <Frame scene={<DesertScene variant="field" />} focus>
-      <header className="hero-title compact">
-        <h1>Inbox</h1>
-        <p>Recommendations waiting for an engineer · decisions are recorded, never sent to field equipment</p>
-        <div className="hero-chips"><DataModeChip /></div>
-      </header>
-      <div className="designer scroll">
-        <Card strong style={{ maxWidth: 980, width: '100%', margin: '0 auto' }}>
-          <div className="row between" style={{ marginBottom: 10 }}>
-            <div className="seg" role="group" aria-label="Filter">
-              <button aria-pressed={filter === 'PENDING'} onClick={() => setFilter('PENDING')}>Pending</button>
-              <button aria-pressed={filter === 'ALL'} onClick={() => setFilter('ALL')}>History</button>
-            </div>
-            <span className="label-3">{data?.length ?? 0} recommendations this session</span>
+    <>
+      <PageHeader title="Inbox" sub="Recommendations waiting for an engineer · decisions are recorded, never sent to field equipment" />
+      <Panel title={filter === 'PENDING' ? 'Waiting for you' : 'All decisions'}
+        action={<span className="seg" role="group" aria-label="Filter">
+          <button aria-pressed={filter === 'PENDING'} onClick={() => setFilter('PENDING')}>Pending</button>
+          <button aria-pressed={filter === 'ALL'} onClick={() => setFilter('ALL')}>History</button>
+        </span>}>
+        {!rows.length ? (
+          <div style={{ padding: '24px 0', textAlign: 'center' }}>
+            <p className="muted">{filter === 'PENDING' ? 'Nothing is waiting for a decision.' : 'No recommendations yet.'}</p>
+            <Link className="btn primary" to="/wells/BG-023/optimize">Optimize well BG-023</Link>
           </div>
-          {!rows.length ? (
-            <div className="center" style={{ padding: '30px 0' }}>
-              <p className="muted">{filter === 'PENDING' ? 'Nothing is waiting for a decision.' : 'No recommendations yet.'}</p>
-              <Link className="pill-btn primary" to="/wells/BG-023/optimize">Run the optimizer on BG-023 <span className="plus">→</span></Link>
-            </div>
-          ) : (
-            <table className="t">
-              <thead><tr><th>Well</th><th>Strategy</th><th>Gate</th><th>Trust</th><th className="r">Net ₹/day</th><th>Status</th><th>Comment</th></tr></thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.recommendation_id} className="link" tabIndex={0}
-                    onClick={() => nav(`/wells/${r.well_id}/optimize/${r.run_id}`)} onKeyDown={(e) => e.key === 'Enter' && nav(`/wells/${r.well_id}/optimize/${r.run_id}`)}>
-                    <td><b style={{ fontWeight: 600 }}>{r.well_id}</b> <span className="faint">day {r.created_day}</span></td>
-                    <td>{r.strategy.toLowerCase()}</td>
-                    <td><StatusChip tone={verdictTone(r.verdict)}>{VERDICT_LABEL[r.verdict]}</StatusChip></td>
-                    <td><StatusChip tone={trustTone(r.trust)} mark={false}>{r.trust.toLowerCase()}</StatusChip></td>
-                    <td className="r num">{inr(r.net_inr_per_day)}</td>
-                    <td><StatusChip tone={r.status === 'APPROVED' ? 'ok' : r.status === 'REJECTED' ? 'fail' : r.status === 'DEFERRED' ? 'warn' : 'neutral'} mark={false}>{r.status.toLowerCase()}</StatusChip></td>
-                    <td className="faint" style={{ whiteSpace: 'normal', maxWidth: 220 }}>{r.comment ?? ''}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Card>
-      </div>
-      <PillBar title="Inbox" actions={<Link className="pill-btn" to="/field">Field board</Link>} />
-    </Frame>
+        ) : (
+          <table className="tbl">
+            <thead><tr><th>Day</th><th>Well</th><th>Strategy</th><th className="r">Net ₹/day</th><th>Safety</th><th>Trust</th><th>Status</th></tr></thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.recommendation_id} className="link" tabIndex={0}
+                  onClick={() => nav(`/wells/${r.well_id}/optimize/${r.run_id}`)} onKeyDown={(e) => e.key === 'Enter' && nav(`/wells/${r.well_id}/optimize/${r.run_id}`)}>
+                  <td className="time">day {r.created_day}</td>
+                  <td><span className="row"><span className="well-ico"><WellIcon /></span><span className="name">{r.well_id}</span></span></td>
+                  <td><div>{NAME[r.strategy] ?? r.strategy}</div>{r.comment && <div className="size">“{r.comment}”</div>}</td>
+                  <td className="r num">{inr(r.net_inr_per_day)}</td>
+                  <td><Status tone={verdictTone(r.verdict)}>{VERDICT_LABEL[r.verdict]}</Status></td>
+                  <td><Status tone={trustTone(r.trust)}>{r.trust.toLowerCase()}</Status></td>
+                  <td><Status tone={r.status === 'APPROVED' ? 'ok' : r.status === 'REJECTED' ? 'bad' : r.status === 'PENDING' ? 'info' : 'neutral'}>{r.status.toLowerCase()}</Status></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Panel>
+    </>
   );
 }

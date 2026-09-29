@@ -1,80 +1,43 @@
-/* Light "golden hour" is the default (the visual reference); dark only via data-theme="dark".
-   PetroTwin design tokens — "golden hour" glass, taken from the visual reference:
-   warm frosted cards over a full-bleed desert scene, one soft-yellow accent,
-   near-monochrome data with colour reserved for status. */
+/* PetroTwin v2 tokens — clean dashboard reference: white surfaces, one black card,
+   one lime card, grey tiles, Poppins, colour only for status. */
 :root {
-  --font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --font: 'Poppins', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
-  --page: #c9c4be;
-  --frame-radius: 30px;
+  --outer: #ebebeb;
+  --bg: #ffffff;
+  --ink: #151515;
+  --ink-2: #6e6e6e;
+  --ink-3: #a4a4a4;
+  --line: #ececec;
+  --soft: #f2f2f2;
+  --soft-2: #e6e6e6;
 
-  --glass: rgba(251, 246, 238, 0.56);
-  --glass-strong: rgba(252, 249, 244, 0.8);
-  --glass-soft: rgba(255, 255, 255, 0.34);
-  --glass-border: rgba(255, 255, 255, 0.6);
-  --glass-shadow: 0 14px 34px rgba(72, 50, 24, 0.14), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
-  --blur: 20px;
-  --card-radius: 26px;
-  --inner-radius: 14px;
+  --dark: #1c1c1c;
+  --dark-2: #3a3a3a;
+  --lime: #a8e26d;
+  --lime-soft: #c8ef95;
+  --lime-deep: #6fae2c;
 
-  --text: #2a2622;
-  --text-2: #6b645b;
-  --text-3: #9b9389;
-  --hairline: rgba(60, 45, 30, 0.1);
-  --on-hero: #fffaf2;
+  --ok: #3f8f1f;
+  --ok-bg: #e9f7de;
+  --warn: #d9821a;
+  --warn-bg: #fff1df;
+  --bad: #cf4336;
+  --bad-bg: #fde7e4;
+  --info: #3563a8;
+  --info-bg: #eaf1fb;
+  --assumed: #d9821a;
 
-  --accent: #f2da72;
-  --accent-deep: #dcb934;
-  --accent-ink: #5f4b0c;
-  --bar-muted: rgba(104, 90, 72, 0.16);
-  --bar-muted-2: rgba(104, 90, 72, 0.28);
-  --green-bar: #b7e2a9;
+  /* bottleneck colours (legend / small dots only) */
+  --limit-inflow: #a8e26d;
+  --limit-pump: #8aa9d8;
+  --limit-float: #f0a95a;
+  --limit-fatigue: #b39ad3;
+  --limit-torque: #c98c86;
 
-  --ink-btn: #34302c;
-  --chip-bg: rgba(255, 255, 255, 0.74);
-
-  --ok: #86c395;
-  --ok-ink: #2c6a3b;
-  --warn: #efc05a;
-  --warn-ink: #775709;
-  --fail: #df857a;
-  --fail-ink: #8c2e24;
-  --info: #9fb6d3;
-  --info-ink: #2d4b72;
-  --assumed: #d39a4d;
-
-  --limit-inflow: #79bdb3;
-  --limit-pump: #8da7d6;
-  --limit-float: #e9a863;
-  --limit-fatigue: #b199d2;
-  --limit-torque: #bf8a84;
-
-  --band-fill: rgba(220, 185, 52, 0.18);
-  --focus: 0 0 0 3px rgba(220, 185, 52, 0.55);
-
+  --radius: 18px;
+  --radius-sm: 12px;
+  --focus: 0 0 0 3px rgba(111, 174, 44, 0.45);
   color-scheme: light;
-}
-
-:root[data-theme='dark'] {
-  --page: #1d1a17;
-  --glass: rgba(38, 33, 28, 0.58);
-  --glass-strong: rgba(40, 35, 30, 0.86);
-  --glass-soft: rgba(60, 52, 44, 0.4);
-  --glass-border: rgba(255, 240, 220, 0.12);
-  --glass-shadow: 0 14px 34px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
-  --text: #f3ede4;
-  --text-2: #c2b8aa;
-  --text-3: #8f8577;
-  --hairline: rgba(255, 240, 220, 0.12);
-  --bar-muted: rgba(255, 240, 220, 0.14);
-  --bar-muted-2: rgba(255, 240, 220, 0.26);
-  --chip-bg: rgba(60, 52, 44, 0.8);
-  --ink-btn: #f1e7d6;
-  --accent-ink: #f6e39b;
-  --ok-ink: #9fdcaf;
-  --warn-ink: #f2d38a;
-  --fail-ink: #f1aaa0;
-  --info-ink: #bcd0ea;
-  color-scheme: dark;
 }

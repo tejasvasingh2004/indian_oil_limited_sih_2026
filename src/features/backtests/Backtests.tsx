@@ -1,68 +1,52 @@
 import { Link } from 'react-router-dom';
-import { Card } from '@/components/Card';
-import { DataModeChip, StatusChip } from '@/components/Chips';
-import { Frame } from '@/components/Frame';
-import { PillBar } from '@/components/PillBar';
-import { DesertScene } from '@/components/scenes/DesertScene';
+import { PageHeader } from '@/components/Shell';
+import { Panel, Status } from '@/components/ui';
 
 /**
- * Counterfactual backtest (frontend.md §5.9, system-design §15). The layout always
- * puts forecast skill before any gain. Values stay as ‹placeholders› until a stored
- * backtest run exists — the claims policy forbids showing an unreplayable gain.
+ * Counterfactual backtest (frontend.md §5.9). Skill always comes before gains, and
+ * values stay as ‹placeholders› until a stored run exists (PRD §11 claims policy).
  */
 export function Backtests() {
   const P = ({ children }: { children: string }) => <span className="ph">‹{children}›</span>;
+  const steps = [
+    ['Learn', 'Fit the twin on cycles before cycle k only.'],
+    ['Check the forecast', 'Predict cycle k with the settings OIL actually used, then compare with what happened.'],
+    ['Skill gate', 'Keep only cycles where the forecast was good (oil error ≤ 20%, band coverage 70–90%).'],
+    ['Optimize', 'Re-plan cycle k with the same limits and prices; record the predicted difference.'],
+    ['Report', 'Show forecast skill first. Show gains only for cycles that passed the skill gate.'],
+  ];
   return (
-    <Frame scene={<DesertScene variant="field" />} focus>
-      <header className="hero-title compact">
-        <h1>Backtests</h1>
-        <p>Replay history cycle by cycle: forecast skill first, then the predicted difference from optimizing</p>
-        <div className="hero-chips"><DataModeChip /><StatusChip tone="warn">No stored backtest run yet</StatusChip></div>
-      </header>
-      <div className="designer scroll">
-        <div className="bt-grid">
-          <Card strong title="Protocol" titleLeft>
-            <ol className="protocol">
-              <li><b>Calibrate</b> the twin and models on cycles before <i>k</i> only.</li>
-              <li><b>Forecast cycle <i>k</i></b> under the settings actually used → cycle-oil error, rate MAE, 80% interval coverage.</li>
-              <li><b>Skill gate:</b> cycle-oil APE ≤ 20% and coverage 70–90% (placeholder thresholds).</li>
-              <li><b>Optimize cycle <i>k</i></b> with the same constraints, registry and prices → predicted Δ ₹/day, SOR, kWh/bbl, failure exposure, with intervals.</li>
-              <li><b>Report skill first.</b> Aggregate gains only over cycles that pass the skill gate, and state how many were excluded.</li>
-            </ol>
-            <button className="pill-btn" disabled title="The harness runs in the backend (backtest/); the in-browser mock does not replay history">
-              Run on simulated history · needs backend
-            </button>
-          </Card>
-
-          <Card strong title="Backtest ‹id› · history: SIMULATED" titleLeft>
-            <div className="bt-section">
-              <div className="label">1 · Forecast skill (cycle k under the settings actually used)</div>
-              <div className="bt-stats">
-                <div><span className="label-3">Cycles evaluated</span><b><P>N</P></b></div>
-                <div><span className="label-3">Median cycle-oil APE</span><b><P>x%</P></b></div>
-                <div><span className="label-3">80% coverage</span><b><P>y%</P></b></div>
-                <div><span className="label-3">Pass the skill gate</span><b><P>n</P> of <P>N</P></b></div>
-              </div>
-            </div>
-            <div className="divider" />
-            <div className="bt-section" aria-disabled>
-              <div className="label">2 · Predicted difference, optimized vs actual (skill-passing cycles only)</div>
-              <div className="bt-stats">
-                <div><span className="label-3">Δ net ₹/day</span><b><P>median [P10, P90]</P></b></div>
-                <div><span className="label-3">Δ SOR</span><b><P>…</P></b></div>
-                <div><span className="label-3">Δ kWh/bbl</span><b><P>…</P></b></div>
-                <div><span className="label-3">Excluded for low skill</span><b><P>N − n</P></b></div>
-              </div>
-              <p className="label-3">Label on every number: BACKTESTED on SIMULATED history — not a field result.</p>
-            </div>
-          </Card>
-        </div>
-        <p className="label-3 center">
-          Why placeholders: PRD §11 forbids any % gain that does not come from a stored, replayable backtest.
-          The optimizer's predicted gains are on the <Link to="/wells/BG-023/optimize">Cycle Designer</Link>, labelled PREDICTED.
-        </p>
+    <>
+      <PageHeader title="Backtests" sub="Prove the value on history before anything touches the field" actions={<Status tone="warn">No stored run yet</Status>} />
+      <div className="grid-2">
+        <Panel title="How it works">
+          <table className="tbl">
+            <tbody>
+              {steps.map(([t, d], i) => (
+                <tr key={t}><td className="time">{i + 1}</td><td><div className="name">{t}</div><div className="size" style={{ whiteSpace: 'normal' }}>{d}</div></td></tr>
+              ))}
+            </tbody>
+          </table>
+          <button className="btn" disabled style={{ marginTop: 12 }} title="Runs in the backend backtest harness">Run on simulated history — needs backend</button>
+        </Panel>
+        <Panel title="Report" action={<span className="small muted">history: simulated</span>}>
+          <div className="meter-title">1 · Forecast skill</div>
+          <div className="tiles" style={{ flexWrap: 'wrap' }}>
+            <div className="tile"><span className="t-label">Cycles checked</span><span className="t-value"><P>N</P></span></div>
+            <div className="tile"><span className="t-label">Oil error</span><span className="t-value"><P>x%</P></span></div>
+            <div className="tile"><span className="t-label">In band</span><span className="t-value"><P>y%</P></span></div>
+          </div>
+          <div className="meter-title" style={{ marginTop: 18 }}>2 · Predicted difference (skill-passing cycles only)</div>
+          <div className="tiles" style={{ flexWrap: 'wrap', opacity: 0.6 }}>
+            <div className="tile"><span className="t-label">Net ₹/day</span><span className="t-value"><P>Δ</P></span></div>
+            <div className="tile"><span className="t-label">Steam-oil ratio</span><span className="t-value"><P>Δ</P></span></div>
+            <div className="tile"><span className="t-label">Excluded</span><span className="t-value"><P>n</P></span></div>
+          </div>
+          <p className="small faint" style={{ marginBottom: 0 }}>
+            No gain is shown until it comes from a stored, replayable backtest. Predicted gains live on <Link to="/wells/BG-023/optimize">Optimize</Link>, labelled as predictions.
+          </p>
+        </Panel>
       </div>
-      <PillBar title="Backtests" actions={<Link className="pill-btn" to="/field">Field board</Link>} />
-    </Frame>
+    </>
   );
 }

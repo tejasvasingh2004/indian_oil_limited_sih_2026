@@ -8,17 +8,16 @@ export function Drawer({ title, sub, onClose, children }: { title: ReactNode; su
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
   }, [onClose]);
-  // portal: glass cards use backdrop-filter, which would trap fixed children inside the card
   return createPortal(
     <>
-      <div className="overlay" style={{ background: 'rgba(40,28,14,0.12)' }} onClick={onClose} />
-      <aside className="card strong drawer scroll" role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined} style={{ zIndex: 51 }}>
-        <div className="row between" style={{ marginBottom: 14 }}>
+      <div className="overlay" onClick={onClose} />
+      <aside className="drawer" role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined}>
+        <div className="row between" style={{ alignItems: 'flex-start', marginBottom: 16 }}>
           <div>
-            <div className="mid">{title}</div>
-            {sub && <div className="label">{sub}</div>}
+            <div style={{ fontSize: 18 }}>{title}</div>
+            {sub && <div className="small muted">{sub}</div>}
           </div>
-          <button className="pill-btn" onClick={onClose} aria-label="Close" autoFocus><CloseIcon /></button>
+          <button className="btn ghost sm" onClick={onClose} aria-label="Close" autoFocus><CloseIcon /></button>
         </div>
         <div className="drawer-body">{children}</div>
       </aside>

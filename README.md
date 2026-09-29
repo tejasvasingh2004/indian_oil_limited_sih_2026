@@ -17,19 +17,21 @@ Demo shortcuts:
 - `/wells/BG-023` is the reference well (system-design §2.3).
 - `/wells/BG-023/optimize?autorun=1` starts an optimization run immediately.
 - `/wells/BG-009` is out of distribution, so you can see the OOD block.
-- **+1 day** in the pill bar advances the simulated clock for all wells, and the twin-update card scores the new measurement.
+- **+1 day** on a well page advances the simulated clock for all wells; a note shows how the new measurement compared with the forecast.
 
 ## Screens
 
+Visual style (v2): white dashboard with a left sidebar, three stat cards per page (black / grey / lime), bordered panels, a hatched lime meter and tables with small status pills. Every page follows the same pattern — stat cards, one or two panels, one table.
+
 | Route | Screen | Covers |
 |---|---|---|
-| `/field` | Field Board: wells by bottleneck, output donut, tiles, needs-attention, well grid | US-01 |
-| `/wells/:id` | Well Console: live pumpjack at the well's SPM (views: surface · rod string · reservoir), Navigator, re-steam window, float margin, status strip, drawers | US-02…10, 18, 19, 21 |
+| `/field` | Dashboard: oil today, energy per barrel, wells needing attention; reservoir-limited meter; wells table | US-01 |
+| `/wells/:id` | Well: oil rate, rod float margin, re-steam in; what limits the well; what to change (levers + safety); oil forecast; vitals; drawers for the re-steam curve, bottleneck history and forecast check | US-02…10, 18, 19, 21 |
 | `/wells/:id/scenario-lab` | Scenario Lab: up to 4 next-cycle designs, fixed or planned pump speed | US-11 |
-| `/wells/:id/optimize[/:runId]` | Cycle Designer: grid optimizer, sanity check, strategies, comparison, SRP plan, trade-off space, explanation, gate + trust, decision | US-12…20 |
-| `/risk` | Risk Center | US-10 |
+| `/wells/:id/optimize[/:runId]` | Optimize: setup, progress, strategies table, pump-speed plan, why, safety check + trust, decision | US-12…20 |
+| `/risk` | Risk | US-10 |
 | `/recommendations` | Inbox and history | US-20, 25 |
-| `/backtests` | Counterfactual backtest layout (skill first; placeholders until a stored run exists) | US-22 |
+| `/backtests` | Backtest method and report layout (skill first; placeholders until a stored run exists) | US-22 |
 
 Model health, data quality and admin are build-order step 9 and are not in this build.
 
@@ -40,9 +42,8 @@ src/
   api/          types (mirror system-design §5), client (mock-backed), React Query hooks
   mocks/        registry · model (physics chain) · wells (33) · cycle (next-cycle engine) ·
                 optimizer (grid, gate, trust, sanity, explanations) · evidence · state (clock, ledger)
-  components/   Card, Metric (provenance + evidence), Chips/TrustMeter, EvidencePopover, Drawer,
-                PillBar, Frame, charts (bars, donuts, threshold, strip, line+band, step, scatter),
-                scenes/ (DesertScene pumpjack, DownholeScene cutaway)
+  components/   Shell (sidebar + header), ui (StatCard, Panel, Tile, Meter, Status, PillLink), Metric,
+                Chips (TrustMeter), EvidencePopover, Drawer, charts (limit bars, line + band, step plan, scatter)
   features/     field · well · scenario · optimize · risk · inbox · backtests
   styles/       tokens.css (golden-hour glass), app.css
 scripts/        check-no-literal-kpi.mjs (Evidence Lock guard)
@@ -61,5 +62,5 @@ scripts/        check-no-literal-kpi.mjs (Evidence Lock guard)
 |---|---|---|
 | Tailwind + shadcn/ui | Plain CSS with tokens | The frosted-glass reference look is custom; utilities add little |
 | Plotly | Hand-drawn SVG charts | Minimal marks match the reference; saves ~3 MB |
-| Dark theme default | Light "golden hour" default (`data-theme="dark"` still works) | The requested visual reference is light |
+| Dark theme default | Light dashboard only | The requested visual reference is light and minimal |
 | MSW fixtures | In-browser mock module | Numbers are computed by a model, not recorded, so screens stay consistent |
