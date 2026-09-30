@@ -45,7 +45,7 @@ function cumOilTo(p: WellParams, T: number) {
   return s;
 }
 
-function dqOf(p: WellParams) {
+export function dqOf(p: WellParams) {
   const score = p.id === 'BG-023' ? 0.92 : 0.84 + 0.14 * unit(p.id + ':dq');
   const flags = score < 0.9 ? ['IMPUTED_2H_GAP', 'SPIKE_REMOVED'] : ['IMPUTED_2H_GAP'];
   return { score, flags };
@@ -154,6 +154,8 @@ export function wellSummaries(): WellSummary[] {
       goodman_sr: producing ? goodmanSr(w, t, w.hz) : 0,
       fillage: producing ? produced(w, t).fillage : 0,
       resteam_p50_day: win ? win.p50 : null,
+      resteam_p10_day: win ? win.p10 : null,
+      resteam_p90_day: win ? win.p90 : null,
       days_to_resteam: win ? win.p50 - t : null,
       trust: stateTrust(w).level,
       dq_score: dqOf(w).score,
@@ -225,9 +227,9 @@ function fmiShape(z: number, minDepth: number, pumpDepth: number) {
   return 0.22 + 0.09 * Math.pow(x, 0.8);
 }
 
-export function rodProfile(id: string, hz?: number): RodProfile {
+export function rodProfile(id: string, hz?: number, day?: number): RodProfile {
   const p = current(id)!;
-  const t = p.day;
+  const t = day ?? p.day;
   const useHz = hz ?? p.hz;
   const pumpDepth = reg('srp.pump_depth_m');
   const fmiNow = fmiAt(p, t, useHz);
@@ -247,7 +249,7 @@ export function rodProfile(id: string, hz?: number): RodProfile {
       { section: 3, grade: 'D', diameter_in: 0.75, from_m: 760, to_m: pumpDepth, goodman_sr: sr * 0.73, damage_cum: 0.009 * age },
     ],
     impact_index: impactIndex(p, t, useHz),
-    provenance: 'DERIVED', evidence_id: evidence('rods', snap(p), { hz: useHz, stroke: p.stroke }),
+    provenance: 'DERIVED', evidence_id: evidence('rods', snap(p), { hz: useHz, stroke: p.stroke, t }),
   };
 }
 

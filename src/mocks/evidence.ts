@@ -17,6 +17,7 @@ const FUNCTIONS: Record<string, { kind: Kind; fn: string; params: RegKey[]; mode
   sor: { kind: 'FORECAST', fn: 'mock.physics.surface.cycle_sor', params: ['steam.rate_t_per_h'], models: ['A'] },
   scenario: { kind: 'SCENARIO', fn: 'mock.simulation.evaluate_cycle', params: ['steam.quality', 'steam.rate_t_per_h', 'fluid.walther_B', 'econ.oil_netback_inr', 'econ.steam_inr_per_t', 'econ.power_inr_per_kwh', 'econ.failure_cost_inr', 'limits.fmi_min'], models: ['A', 'D'] },
   strategy: { kind: 'STRATEGY', fn: 'mock.optimizer.grid.evaluate_design', params: ['steam.quality', 'steam.rate_t_per_h', 'fluid.walther_B', 'econ.oil_netback_inr', 'econ.steam_inr_per_t', 'econ.power_inr_per_kwh', 'econ.failure_cost_inr', 'econ.mobilization_inr', 'limits.fmi_min', 'limits.goodman_sr'], models: ['A', 'D'] },
+  backtest: { kind: 'BACKTEST', fn: 'mock.backtest.counterfactual', params: ['backtest.ape_max', 'backtest.coverage_lo', 'backtest.coverage_hi', 'econ.oil_netback_inr', 'econ.steam_inr_per_t'], models: ['A', 'D'] },
   field: { kind: 'FIELD', fn: 'mock.field.aggregate_kpis', params: ['field.operating_wells', 'steam.rate_t_per_h'] },
 };
 

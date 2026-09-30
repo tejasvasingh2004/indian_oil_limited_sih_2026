@@ -41,6 +41,14 @@ export const REG = {
   'limits.steam_t_min': { value: 800, unit: 't', label: 'ASSUMED' },
   'ml.trained_vfd_hz_max': { value: 46, unit: 'Hz', label: 'DEMO' },
   'field.operating_wells': { value: 33, label: 'LITERATURE', source: 'Business Today, Apr 2026' },
+  'steam.injection_days': { value: 17, unit: 'd', label: 'OIL', verify: true, range: [14, 21], source: 'OIL CSS practice (to confirm)' },
+  'reservoir.pay_thickness_m': { value: 40, unit: 'm', label: 'ASSUMED', source: 'illustrative pay thickness for the 3D view' },
+  'ml.trained_water_cut_min': { value: 0.35, label: 'DEMO' },
+  'ml.trained_water_cut_max': { value: 0.65, label: 'DEMO' },
+  'viz.heated_radius_ref_m': { value: 18, unit: 'm', label: 'DEMO', source: 'display scale for the heated zone (Marx–Langenheim-style radius at 1,300 t)' },
+  'backtest.ape_max': { value: 0.2, label: 'ASSUMED', source: 'system-design §15 placeholder' },
+  'backtest.coverage_lo': { value: 0.7, label: 'ASSUMED' },
+  'backtest.coverage_hi': { value: 0.9, label: 'ASSUMED' },
 } satisfies Record<string, RegEntry>;
 
 export type RegKey = keyof typeof REG;

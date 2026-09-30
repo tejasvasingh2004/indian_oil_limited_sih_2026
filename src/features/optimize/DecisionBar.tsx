@@ -4,12 +4,14 @@ import { useDecide, useRecommendations } from '@/api/hooks';
 import type { DecisionKind, Strategy } from '@/api/types';
 import { Status } from '@/components/ui';
 import { useUi } from '@/store/ui';
+import { canAct, useRole } from '@/store/role';
 
 const REASONS = ['Operational constraint', 'Steam not available', 'Disagree with the model', 'Equipment limit', 'Other'];
 
 /** Approve / Defer / Reject (system-design §5.10, §13.2). Nothing is sent to field equipment. */
 export function DecisionBar({ s }: { s: Strategy }) {
   const decide = useDecide();
+  const viewer = !canAct(useRole((r) => r.role));
   const { data: recs } = useRecommendations();
   const showToast = useUi((u) => u.showToast);
   const [reason, setReason] = useState('');
@@ -61,9 +63,9 @@ export function DecisionBar({ s }: { s: Strategy }) {
         </label>
       )}
       <div className="row">
-        <button className="btn primary" disabled={approveBlocked || decide.isPending} onClick={() => submit('APPROVED')}>Approve</button>
-        <button className="btn" disabled={decide.isPending} onClick={() => submit('DEFERRED')}>Later</button>
-        <button className="btn" disabled={decide.isPending} onClick={() => submit('REJECTED')}>Reject</button>
+        <button className="btn primary" disabled={viewer || approveBlocked || decide.isPending} onClick={() => submit('APPROVED')}>Approve</button>
+        <button className="btn" disabled={viewer || decide.isPending} onClick={() => submit('DEFERRED')}>Later</button>
+        <button className="btn" disabled={viewer || decide.isPending} onClick={() => submit('REJECTED')}>Reject</button>
       </div>
       <span className="small faint">Approving only records the decision. Engineers change the well by hand.</span>
     </div>

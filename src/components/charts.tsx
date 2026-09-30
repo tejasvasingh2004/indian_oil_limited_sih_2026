@@ -27,21 +27,28 @@ export function LimitBars({ bars, format }: { bars: LimitBar[]; format: (v: numb
 
 // ---- line + band chart ----------------------------------------------------------------------------
 export interface Series { x: number[]; y: number[]; lo?: number[]; hi?: number[]; color?: string; dashed?: boolean; width?: number }
-export function LineChart({ series, height = 170, xLabel, yFormat, vlines = [], hlines = [], bands = [], ariaLabel }: {
+export function LineChart({ series, height = 170, xLabel, yFormat, vlines = [], hlines = [], bands = [], ariaLabel, yLog = false, marks = [], xFormat }: {
   series: Series[]; height?: number; xLabel?: string; yFormat: (v: number) => string;
   vlines?: { x: number; label: string; strong?: boolean }[]; hlines?: { y: number; label: string }[];
   bands?: { from: number; to: number; label?: string }[]; ariaLabel: string;
+  /** log-scaled y axis (viscosity) */
+  yLog?: boolean;
+  /** vertical range marks, e.g. a published anchor band at one x */
+  marks?: { x: number; lo: number; hi: number; label: string }[];
+  xFormat?: (v: number) => string;
 }) {
   const W = 560, H = height, P = { l: 46, r: 12, t: 12, b: 24 };
   const xs = series.flatMap((s) => s.x);
-  const ys = series.flatMap((s) => [...s.y, ...(s.lo ?? []), ...(s.hi ?? [])]).concat(hlines.map((h) => h.y));
+  const tf = (v: number) => (yLog ? Math.log10(Math.max(v, 1e-9)) : v);
+  const ys = series.flatMap((s) => [...s.y, ...(s.lo ?? []), ...(s.hi ?? [])]).concat(hlines.map((h) => h.y), marks.flatMap((m) => [m.lo, m.hi])).map(tf);
   if (!xs.length) return <div className="skeleton" style={{ height }} />;
   const x0 = Math.min(...xs), x1 = Math.max(...xs);
   const yMin = Math.min(...ys), yMax = Math.max(...ys);
   const pad = (yMax - yMin) * 0.1 || 1;
   const y0 = yMin - pad, y1 = yMax + pad;
   const sx = (v: number) => P.l + ((v - x0) / (x1 - x0 || 1)) * (W - P.l - P.r);
-  const sy = (v: number) => P.t + (1 - (v - y0) / (y1 - y0)) * (H - P.t - P.b);
+  const sy = (v: number) => P.t + (1 - (tf(v) - y0) / (y1 - y0)) * (H - P.t - P.b);
+  const inv = (t: number) => (yLog ? Math.pow(10, t) : t);
   const path = (x: number[], y: number[]) => x.map((v, i) => `${i ? 'L' : 'M'}${sx(v).toFixed(1)} ${sy(y[i]).toFixed(1)}`).join(' ');
   const ticks = [y0 + (y1 - y0) * 0.15, (y0 + y1) / 2, y1 - (y1 - y0) * 0.15];
   return (
@@ -54,8 +61,8 @@ export function LineChart({ series, height = 170, xLabel, yFormat, vlines = [], 
       ))}
       {ticks.map((t, i) => (
         <g key={i}>
-          <line x1={P.l} x2={W - P.r} y1={sy(t)} y2={sy(t)} stroke="var(--line)" />
-          <text x={P.l - 6} y={sy(t) + 3} textAnchor="end" fontSize="10" fill="var(--ink-3)">{yFormat(t)}</text>
+          <line x1={P.l} x2={W - P.r} y1={sy(inv(t))} y2={sy(inv(t))} stroke="var(--line)" />
+          <text x={P.l - 6} y={sy(inv(t)) + 3} textAnchor="end" fontSize="10" fill="var(--ink-3)">{yFormat(inv(t))}</text>
         </g>
       ))}
       {hlines.map((h, i) => (
@@ -77,8 +84,14 @@ export function LineChart({ series, height = 170, xLabel, yFormat, vlines = [], 
           <text x={sx(v.x) + 4} y={H - P.b - 4} fontSize="10" fill="var(--ink-2)">{v.label}</text>
         </g>
       ))}
+      {marks.map((m, i) => (
+        <g key={`m${i}`}>
+          <line x1={sx(m.x)} x2={sx(m.x)} y1={sy(m.lo)} y2={sy(m.hi)} stroke="var(--lime-deep)" strokeWidth="6" strokeLinecap="round" opacity="0.8" />
+          <text x={sx(m.x) + 8} y={sy(m.hi) - 2} fontSize="10" fill="var(--ink-2)">{m.label}</text>
+        </g>
+      ))}
       <text x={W - P.r} y={H - 6} textAnchor="end" fontSize="10" fill="var(--ink-3)">{xLabel}</text>
-      <text x={P.l} y={H - 6} fontSize="10" fill="var(--ink-3)">{x0}</text>
+      <text x={P.l} y={H - 6} fontSize="10" fill="var(--ink-3)">{xFormat ? xFormat(x0) : x0}</text>
     </svg>
   );
 }
@@ -151,6 +164,44 @@ export function Scatter({ points, picks, current, xFormat, yFormat, xLabel, yLab
       <text x={P.l} y={H - 8} fontSize="10" fill="var(--ink-3)">{xFormat(xa)}</text>
       <text x={P.l - 6} y={H - P.b} textAnchor="end" fontSize="10" fill="var(--ink-3)">{yFormat(ya)}</text>
       <text x={P.l - 6} y={P.t + 8} textAnchor="end" fontSize="10" fill="var(--ink-3)">{yFormat(yb)}</text>
+    </svg>
+  );
+}
+
+// ---- rod string: float margin against depth (depth grows downward) ------------------------------------
+export function DepthProfile({ depth, value, limit, weakDepth, sections, height = 250, ariaLabel }: {
+  depth: number[]; value: number[]; limit: number; weakDepth: number;
+  sections: { from_m: number; to_m: number; label: string }[]; height?: number; ariaLabel: string;
+}) {
+  const W = 560, H = height, P = { l: 46, r: 110, t: 10, b: 22 };
+  const zMax = depth[depth.length - 1] || 1;
+  const vMax = Math.max(1, ...value);
+  const vMin = Math.min(0, ...value);
+  const sx = (v: number) => P.l + ((v - vMin) / (vMax - vMin)) * (W - P.l - P.r);
+  const sy = (z: number) => P.t + (z / zMax) * (H - P.t - P.b);
+  const color = (v: number) => (v < limit ? 'var(--bad)' : v < limit + 0.1 ? 'var(--warn)' : 'var(--lime-deep)');
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} role="img" aria-label={ariaLabel} style={{ display: 'block' }}>
+      <rect x={sx(vMin)} y={P.t} width={sx(limit) - sx(vMin)} height={H - P.t - P.b} fill="var(--bad-bg)" />
+      <line x1={sx(limit)} x2={sx(limit)} y1={P.t} y2={H - P.b} stroke="var(--bad)" strokeDasharray="4 4" />
+      <text x={sx(limit) + 4} y={H - P.b - 4} fontSize="10" fill="var(--bad)">limit {limit}</text>
+      {[0, 0.25, 0.5, 0.75, 1].map((k) => (
+        <g key={k}>
+          <line x1={P.l} x2={W - P.r} y1={sy(k * zMax)} y2={sy(k * zMax)} stroke="var(--line)" />
+          <text x={P.l - 6} y={sy(k * zMax) + 3} textAnchor="end" fontSize="10" fill="var(--ink-3)">{Math.round(k * zMax)} m</text>
+        </g>
+      ))}
+      {depth.slice(1).map((z, i) => (
+        <line key={z} x1={sx(value[i])} y1={sy(depth[i])} x2={sx(value[i + 1])} y2={sy(z)} stroke={color(Math.min(value[i], value[i + 1]))} strokeWidth="2.4" strokeLinecap="round" />
+      ))}
+      <circle cx={sx(Math.min(...value))} cy={sy(weakDepth)} r="4.5" fill="#fff" stroke="var(--ink)" strokeWidth="1.5" />
+      {sections.map((s, i) => (
+        <g key={i}>
+          <rect x={W - P.r + 14} y={sy(s.from_m) + 1} width="8" height={Math.max(2, sy(s.to_m) - sy(s.from_m) - 2)} rx="3" fill={i % 2 ? 'var(--soft-2)' : 'var(--dark)'} />
+          <text x={W - P.r + 28} y={(sy(s.from_m) + sy(s.to_m)) / 2 + 3} fontSize="10" fill="var(--ink-2)">{s.label}</text>
+        </g>
+      ))}
+      <text x={W - P.r} y={H - 6} textAnchor="end" fontSize="10" fill="var(--ink-3)">float margin →</text>
     </svg>
   );
 }

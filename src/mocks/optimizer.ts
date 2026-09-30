@@ -11,7 +11,7 @@ import {
   CycleEval, Design, Preset, designGrid, evaluateCycle, evaluateDesignAllPresets, cycleUncertainty,
 } from './cycle';
 import { evidence } from './evidence';
-import { current, clockOffset, recommendations } from './state';
+import { audit, current, clockOffset, recommendations } from './state';
 import { CRITICAL, stateTrust, trustLevel, wellState } from './server';
 
 const PRACTICE_CUTOFF_DAY = 150;
@@ -199,6 +199,7 @@ function finish(state: RunState, p: WellParams, req: OptimizationRequest, grid: 
   });
   run.status = 'SUCCEEDED';
   run.generation = run.of;
+  audit('engineer', 'OPTIMIZATION_RUN', 'optimization_run', run.run_id, { well: p.id, strategies: run.strategies.map((s) => [s.label, s.gate?.verdict]), sanity: run.sanity_flags.length });
 }
 
 function planSummary(e: CycleEval) {
@@ -357,5 +358,6 @@ export function decide(recId: string, d: DecisionRequest): Recommendation {
   const err = decisionError(r, d);
   if (err) throw new Error(err);
   Object.assign(r, { status: d.decision, reason: d.reason, comment: d.comment, review_note: d.review_note });
+  audit('engineer', 'DECISION_' + d.decision, 'recommendation', recId, { reason: d.reason ?? null, comment: d.comment ?? null });
   return structuredClone(r);
 }

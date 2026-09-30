@@ -13,6 +13,8 @@ import { PageHeader } from '@/components/Shell';
 import { Panel, PillLink, StatCard, Status, Tile } from '@/components/ui';
 import { LIMIT_LABEL, LIMIT_VAR, MODE_LABEL, dateShort, dateTime, fmt, inr, pct } from '@/lib/format';
 import { useUi } from '@/store/ui';
+import { canAct, useRole } from '@/store/role';
+import { CyclesPanel, HeatPanel, RodStringPanel, WellDecisionsPanel } from './WellPanels';
 
 type Open = null | 'resteam' | 'history' | 'ledger';
 
@@ -26,6 +28,7 @@ export function WellPage() {
   const showToast = useUi((u) => u.showToast);
   const [open, setOpen] = useState<Open>(null);
   const [twin, setTwin] = useState(false);
+  const role = useRole((r) => r.role);
   const producing = s?.cycle.phase === 'PRODUCTION';
   const derived = (value: number, unit?: string): Quantity => ({ value, unit, provenance: 'DERIVED', evidence_id: b!.evidence_id, assumed: true });
 
@@ -36,7 +39,11 @@ export function WellPage() {
         sub={s ? `Cycle ${s.cycle.cycle_no} · ${s.cycle.phase.toLowerCase()} day ${s.cycle.production_day} · ${dateTime(s.as_of)}` : 'Loading…'}
         actions={<>
           {s && <TrustMeter trust={s.trust} />}
-          <button className="btn ghost" disabled={adv.isPending}
+          {s && <Link to={`/data-quality?well=${wellId}`} title={s.dq.flags.join(', ') || 'no data-quality flags'} style={{ textDecoration: 'none' }}>
+            <Status tone={s.dq.score >= 0.9 ? 'ok' : s.dq.score >= 0.8 ? 'warn' : 'bad'}>data {fmt(s.dq.score * 100)}%</Status>
+          </Link>}
+          <Link className="btn ghost" to={`/wells/${wellId}/3d`}>3D</Link>
+          <button className="btn ghost" disabled={adv.isPending || !canAct(role)}
             title="Demo only: the simulator sends the next day of measurements for every well"
             onClick={() => adv.mutate(1, { onSuccess: () => { setTwin(true); showToast('New day of measurements received.'); } })}>
             {adv.isPending ? 'Updating…' : '+1 day'}
@@ -128,6 +135,18 @@ export function WellPage() {
           </Panel>
         </div>
       )}
+
+      {producing && (
+        <div className="section grid-2">
+          <RodStringPanel wellId={wellId} />
+          <HeatPanel wellId={wellId} />
+        </div>
+      )}
+
+      <div className="section grid-2">
+        <CyclesPanel wellId={wellId} />
+        <WellDecisionsPanel wellId={wellId} />
+      </div>
 
       {open === 'resteam' && <ResteamDrawer wellId={wellId} onClose={() => setOpen(null)} />}
       {open === 'history' && <HistoryDrawer wellId={wellId} onClose={() => setOpen(null)} />}

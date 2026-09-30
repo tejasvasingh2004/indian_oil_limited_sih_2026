@@ -56,3 +56,36 @@ export const useAdvanceTime = () => {
     onSuccess: (offset) => qc.setQueryData(['clock'], offset),
   });
 };
+
+// ---- v3 ----
+export const useSnapshot = (id: string, day?: number, hz?: number) => {
+  const t = useT();
+  return useQuery({ queryKey: ['well', id, 'snap', day ?? 'now', hz ?? 'current', t], queryFn: () => api.snapshot(id, day, hz), placeholderData: (prev) => prev });
+};
+export const useThermal = (id: string) => { const t = useT(); return useQuery({ queryKey: ['well', id, 'thermal', t], queryFn: () => api.thermal(id) }); };
+export const useCycles = (id: string) => { const t = useT(); return useQuery({ queryKey: ['well', id, 'cycles', t], queryFn: () => api.cycles(id) }); };
+export const useDataQuality = () => { const t = useT(); return useQuery({ queryKey: ['dq', t], queryFn: api.dataQuality }); };
+export const useDqSeries = (id: string | null) => {
+  const t = useT();
+  return useQuery({ queryKey: ['dq', id, t], queryFn: () => api.dqSeries(id!), enabled: !!id });
+};
+export const useModelHealth = () => { const t = useT(); return useQuery({ queryKey: ['models', t], queryFn: api.modelHealth }); };
+export const useRegistry = () => useQuery({ queryKey: ['admin', 'registry'], queryFn: api.registry, staleTime: Infinity });
+export const useConstraints = () => useQuery({ queryKey: ['admin', 'constraints'], queryFn: api.constraints, staleTime: Infinity });
+export const useAudit = () => useQuery({ queryKey: ['audit'], queryFn: api.audit, staleTime: 0 });
+
+export const useLatestBacktest = () => useQuery({ queryKey: ['backtest', 'latest'], queryFn: api.latestBacktest });
+export const useStartBacktest = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.startBacktest(),
+    onSuccess: (run) => { qc.setQueryData(['backtest', run.backtest_id], run); qc.invalidateQueries({ queryKey: ['audit'] }); },
+  });
+};
+export const useBacktest = (id: string | undefined) =>
+  useQuery({
+    queryKey: ['backtest', id],
+    queryFn: () => api.backtest(id!),
+    enabled: !!id,
+    refetchInterval: (q) => (q.state.data?.status === 'RUNNING' ? 300 : false),
+  });

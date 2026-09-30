@@ -57,6 +57,8 @@ export interface WellSummary {
   goodman_sr: number;
   fillage: number;
   resteam_p50_day: number | null;
+  resteam_p10_day: number | null;
+  resteam_p90_day: number | null;
   days_to_resteam: number | null;
   trust: Confidence;
   dq_score: number;
@@ -230,3 +232,60 @@ export interface Recommendation {
   created_day: number; trust: Confidence; verdict: GateVerdict;
   status: 'PENDING' | 'EXPIRED' | DecisionKind; net_inr_per_day: number; reason?: string; comment?: string; review_note?: string;
 }
+
+// ---- v3 additions ----------------------------------------------------------------------------
+export interface WellSnapshot {
+  well_id: string; day: number; hz: number; spm: number; phase: Phase;
+  t_nwb_c: number; viscosity_cp: number; heated_radius_m: number;
+  oil_bopd: number; fluid_bfpd: number; fillage: number;
+  fmi_min: number; fmi_min_depth_m: number; fmi_limit: number; active: LimitName;
+  depth_m: number[]; fmi: number[]; temp_c: number[]; mu_cp: number[]; sections: RodSection[];
+  cycle_end_day: number; pump_depth_m: number; reservoir_depth_m: number; pay_thickness_m: number;
+  evidence_id: string;
+}
+export interface ThermalForecast {
+  well_id: string; today: number; reservoir_t_c: number;
+  days: number[]; t_nwb_c: number[]; viscosity_cp: number[];
+  curve: { t_c: number[]; mu_cp: number[] };
+  anchor: { t_c: number; lo: number; hi: number; label: string };
+  evidence_id: string;
+}
+export interface CycleRecord {
+  cycle_no: number; status: 'COMPLETE' | 'IN_PROGRESS';
+  steam_t: number; inj_pressure_ksc: number; soak_d: number; vfd_hz: number;
+  cutoff_day: number; cycle_oil_bbl: number; peak_bopd: number; sor: number;
+  provenance: 'SIMULATED';
+}
+export interface BacktestCycle {
+  well_id: string; cycle_no: number; calibrated_on: number[];
+  actual_oil: number; forecast_oil: number; lo: number; hi: number; ape: number; in_band: boolean; skill_pass: boolean;
+  actual_net: number; optimized_net: number; d_net: number; d_sor: number; d_kwh: number;
+  optimized: { steam_t: number; soak_d: number };
+}
+export interface BacktestSummary {
+  wells: number; cycles_evaluated: number; median_ape: number; coverage: number; passing: number; excluded: number;
+  d_net_median: number; d_net_p10: number; d_net_p90: number; d_sor_median: number; d_kwh_median: number;
+}
+export interface BacktestRun {
+  backtest_id: string; status: 'RUNNING' | 'SUCCEEDED'; progress: number; of: number;
+  history: 'SIMULATED'; registry_version: string;
+  thresholds: { ape_max: number; coverage_lo: number; coverage_hi: number };
+  cycles: BacktestCycle[]; summary: BacktestSummary | null; evidence_id?: string;
+}
+export interface DQWell {
+  well_id: string; score: number; flags: string[]; missing_pct: number; spikes: number; drift: boolean;
+  imputed_pct: number; last_sample_min: number; events: { day: number; kind: 'SHUTDOWN' | 'MAINTENANCE' | 'WORKOVER'; hours: number }[];
+}
+export interface DQSeries { well_id: string; days: number[]; raw: (number | null)[]; cleaned: number[]; flags: ('SPIKE' | 'GAP' | '')[] }
+export interface ModelCard {
+  model: string; name: string; version: string; trained_at: string; dataset_hash: string;
+  metrics: { label: string; value: string; good: boolean | null }[];
+  gates: { gate: string; status: 'PASS' | 'WARN' | 'FAIL'; detail: string }[];
+}
+export interface ModelHealth { models: ModelCard[]; training_range: { feature: string; lo: number; hi: number; unit: string }[] }
+export interface RegistryRow { key: string; value: number; unit?: string; label: EvidenceLabel; verify: boolean; source?: string; range?: [number, number] }
+export interface AnchorTest { test: string; pass: boolean; detail: string }
+export interface RegistryReport { version: string; rows: RegistryRow[]; anchors: AnchorTest[] }
+export interface ConstraintSet { id: string; source: 'PLACEHOLDER' | 'OIL_MANUAL' | 'ENGINEER'; limits: { key: string; label: string; value: number; unit?: string }[] }
+export interface AuditEntry { seq: number; ts: string; actor: string; action: string; entity: string; entity_id: string; payload: string; prev_hash: string; hash: string }
+export interface AuditReport { entries: AuditEntry[]; chain_ok: boolean }

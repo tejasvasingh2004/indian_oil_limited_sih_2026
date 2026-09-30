@@ -6,6 +6,7 @@ import { AlertIcon, DropIcon, GaugeIcon, WellIcon } from '@/components/Icons';
 import { Metric } from '@/components/Metric';
 import { PageHeader } from '@/components/Shell';
 import { Meter, Panel, PillLink, StatCard, Status, Tile, type Tone } from '@/components/ui';
+import { ResteamCalendar } from './ResteamCalendar';
 import { LIMIT_LABEL, LIMIT_VAR, MODE_LABEL, fmt, pct } from '@/lib/format';
 
 /** One word per well, so the table reads at a glance. */
@@ -65,6 +66,8 @@ export function FieldBoard() {
           </div>
         </Panel>
       </div>
+
+      {wells && <div className="section"><ResteamCalendar wells={wells} /></div>}
 
       <div className="section">
         <Panel title="Wells" action={<PillLink onClick={() => setAll((a) => !a)}>{all ? 'Needs attention first' : `All ${wells?.length ?? ''} wells`}</PillLink>}>

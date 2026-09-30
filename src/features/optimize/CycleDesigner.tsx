@@ -13,6 +13,7 @@ import { delta, fmt, inr, pct } from '@/lib/format';
 import { REG } from '@/mocks/registry';
 import { ExplanationPanel, GateChecklist } from './Explanation';
 import { DecisionBar } from './DecisionBar';
+import { canAct, useRole } from '@/store/role';
 
 const v = (k: keyof typeof REG) => REG[k].value;
 const LIMITS_TEXT = `rod float margin ≥ ${v('limits.fmi_min')} · rod stress ≤ ${v('limits.goodman_sr').toFixed(2)} · pump fillage ≥ ${v('limits.fillage_min')} · pump ${v('limits.vfd_hz_min')}–${v('limits.vfd_hz_max')} Hz · injection ≤ ${v('limits.inj_pressure_ksc_max')} ksc`;
@@ -44,6 +45,7 @@ function Setup({ wellId, blocked, oodDetail, onStarted }: { wellId: string; bloc
   const { data: design } = useWellDesign(wellId);
   const start = useStartOptimization();
   const [req, setReq] = useState<OptimizationRequest>({ well_id: wellId, scope: 'CSS_AND_SRP', steam_available_t: 1500, objective: 'balanced', max_sor: 2.5, max_failure_risk: 0.2 });
+  const role = useRole((r) => r.role);
   const [params] = useSearchParams();
   const auto = useRef(false); // StrictMode runs effects twice in dev
   useEffect(() => setReq((q) => ({ ...q, well_id: wellId })), [wellId]);
@@ -75,7 +77,7 @@ function Setup({ wellId, blocked, oodDetail, onStarted }: { wellId: string; bloc
       </div>
       <div className="row between" style={{ marginTop: 20 }}>
         <span className="small muted">All four strategies are always computed.</span>
-        <button className="btn primary" disabled={steamBad || start.isPending} onClick={() => start.mutate(req, { onSuccess: (x) => onStarted(x.run_id) })}>
+        <button className="btn primary" disabled={steamBad || start.isPending || !canAct(role)} title={canAct(role) ? undefined : 'Viewers cannot start runs'} onClick={() => start.mutate(req, { onSuccess: (x) => onStarted(x.run_id) })}>
           {start.isPending ? 'Starting…' : 'Find strategies'}
         </button>
       </div>

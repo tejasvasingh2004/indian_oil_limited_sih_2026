@@ -184,10 +184,14 @@ function aggregate(pc: WellParams, ph: Physics, design: Design, plan: SrpBlock[]
 export type PlanSpec = { kind: 'optimal'; preset: Preset } | { kind: 'fixed'; hz: number };
 
 export function evaluateCycle(p: WellParams, design: Design, planSpec: PlanSpec, cutoff: number | 'optimal' = 'optimal'): CycleEval {
-  const pc = nextCycleParams(p, design);
+  return evaluateCycleParams(nextCycleParams(p, design), design, planSpec, cutoff);
+}
+
+/** Evaluate a cycle whose parameters are already set (used for past cycles in backtests). */
+export function evaluateCycleParams(pc: WellParams, design: Design, planSpec: PlanSpec, cutoff: number | 'optimal' = 'optimal', level = 1): CycleEval {
   const ph = physics(pc);
   const plan = planSpec.kind === 'fixed' ? fixedPlan(planSpec.hz) : planFast(pc, ph, PRESET_PRICES[planSpec.preset]);
-  return aggregate(pc, ph, design, plan, cutoff);
+  return aggregate(pc, ph, design, plan, cutoff, PRICES, level);
 }
 
 /** P10/P50/P90 re-steam window and net ₹/day interval for a chosen design + plan. */

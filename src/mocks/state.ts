@@ -52,7 +52,35 @@ export const getLedger = ledgerFor;
 
 export function advance(days: number) {
   offsetDays = Math.max(0, Math.min(90, offsetDays + days));
+  audit('simulator', 'ADVANCE_TIME', 'clock', 'field', { days, offset: offsetDays });
 }
 
 // ---- recommendations ---------------------------------------------------------------------
 export const recommendations: Recommendation[] = [];
+
+// ---- audit log (append-only, hash-chained; system-design §4.2) ------------------------------
+import type { AuditEntry } from '@/api/types';
+import { hash } from './model';
+
+const auditLog: AuditEntry[] = [];
+const hex = (n: number) => n.toString(16).padStart(8, '0');
+/** FNV-1a chain in the browser mock; the backend uses SHA-256. */
+const chainHash = (prev: string, body: string) => hex(hash(prev + '|' + body)) + hex(hash(body + '|' + prev));
+
+export function audit(actor: string, action: string, entity: string, entity_id: string, payload: unknown = {}) {
+  const prev = auditLog.length ? auditLog[auditLog.length - 1].hash : '0'.repeat(16);
+  const seq = auditLog.length + 1;
+  const ts = asOf();
+  const body = JSON.stringify({ seq, ts, actor, action, entity, entity_id, payload });
+  auditLog.push({ seq, ts, actor, action, entity, entity_id, payload: JSON.stringify(payload), prev_hash: prev, hash: chainHash(prev, body) });
+}
+
+export function auditReport() {
+  let ok = true;
+  auditLog.forEach((e, i) => {
+    const prev = i ? auditLog[i - 1].hash : '0'.repeat(16);
+    const body = JSON.stringify({ seq: e.seq, ts: e.ts, actor: e.actor, action: e.action, entity: e.entity, entity_id: e.entity_id, payload: JSON.parse(e.payload) });
+    if (e.prev_hash !== prev || e.hash !== chainHash(prev, body)) ok = false;
+  });
+  return { entries: [...auditLog].reverse(), chain_ok: ok };
+}
