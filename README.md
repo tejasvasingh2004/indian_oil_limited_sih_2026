@@ -10,7 +10,12 @@ Smart India Hackathon 2026 · Problem Statement **SIH26120**: *Digital Twin for 
 ![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)
 ![TanStack Query](https://img.shields.io/badge/TanStack_Query-5-FF4154?logo=reactquery&logoColor=white)
 ![Vitest](https://img.shields.io/badge/Vitest-tested-6E9F18?logo=vitest&logoColor=white)
-![License: MIT](https://img.shields.io/badge/License-MIT-green)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Live demo](https://img.shields.io/badge/Live_demo-Vercel-000000?logo=vercel&logoColor=white)](https://indian-oil-limited-sih-2026.vercel.app)
+
+### 🔗 Live demo: **[indian-oil-limited-sih-2026.vercel.app](https://indian-oil-limited-sih-2026.vercel.app)**
+
+Opens straight into the dashboard; no login needed. Try the [3D well sandbox](https://indian-oil-limited-sih-2026.vercel.app/wells/BG-023/3d) or [run the optimizer](https://indian-oil-limited-sih-2026.vercel.app/wells/BG-023/optimize?autorun=1).
 
 ![PetroTwin dashboard: oil today, energy per barrel, wells needing attention, what limits the field and the re-steam calendar](docs/screenshots/overview.png)
 
@@ -82,6 +87,10 @@ A single physics chain (`src/mocks/model.ts` → `cycle.ts`) computes this. Ever
 | `/admin` | Admin | Parameter registry with evidence labels and anchor tests, limits, hash-chained audit log (admin role) |
 
 ## Getting started
+
+**No install needed:** the app is deployed at **https://indian-oil-limited-sih-2026.vercel.app**. It runs the full twin in your browser; reloading resets the demo.
+
+To run it locally:
 
 **Prerequisites:** Node.js 20+ with npm (Node 22+ for the end-to-end test).
 
